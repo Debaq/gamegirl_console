@@ -1,0 +1,44 @@
+#!/bin/sh
+# Arranque automático de la consola (copiar a /etc/init.d/ en la Luckfox: make instalar).
+# Espera la microSD, lanza el menú y lo relanza si se cae. Si el menú termina bien
+# (START apretado al encender, o se lo detuvo), no se relanza.
+# Para desactivarlo: mv /etc/init.d/S95consola /root/init_desactivados/
+
+BIN=/oem/consola/menu
+LOG=/tmp/menu.log
+
+vigilar() {
+    i=0
+    while [ ! -d /mnt/sdcard/roms ] && [ $i -lt 50 ]; do sleep 0.2; i=$((i + 1)); done
+    cd /oem/consola || exit 1
+    while true; do
+        $BIN </dev/null >>$LOG 2>&1
+        r=$?
+        [ $r -eq 0 ] && break           # salida normal
+        [ -e /tmp/consola_parar ] && break
+        echo "menu termino con $r, se relanza" >>$LOG
+        sleep 1
+    done
+}
+
+case "$1" in
+start)
+    rm -f /tmp/consola_parar
+    # Ignorar SIGHUP: si se lanza por adb, al cerrar la sesión el menú no debe morir.
+    trap '' HUP
+    vigilar </dev/null >/dev/null 2>&1 &
+    ;;
+stop)
+    touch /tmp/consola_parar
+    killall menu emu_gba emu_nes emu_gb emu_snes emu_ps1 2>/dev/null
+    ;;
+restart)
+    $0 stop
+    sleep 1
+    $0 start
+    ;;
+*)
+    echo "Uso: $0 {start|stop|restart}"
+    exit 1
+    ;;
+esac

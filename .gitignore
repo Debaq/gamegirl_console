@@ -1,0 +1,13 @@
+# Compilados
+build/
+dist/
+*.o
+*.a
+*.so
+__pycache__/
+
+# Núcleos libretro de terceros (se bajan y compilan con plataformas/pc/compilar_nucleos.sh)
+plataformas/pc/nucleos/
+
+# SD de prueba del PC: enlaces a las ROMs, partidas y configuración local (se arma con armar_sd.sh)
+plataformas/pc/sd_prueba/
